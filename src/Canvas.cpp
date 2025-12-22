@@ -15,7 +15,7 @@ Canvas::Canvas(vec2 window_size)
 const char* Canvas::default_layer_name()
 {
     static char name[LAYER_NAME_MAX_LENGTH];
-    snprintf(name, LAYER_NAME_MAX_LENGTH, "layer %d", layers.size() + 1);
+    snprintf(name, LAYER_NAME_MAX_LENGTH, "layer %d", (int)(layers.size() + 1));
     name[LAYER_NAME_MAX_LENGTH - 1] = '\0';
     return name;
 }
@@ -206,6 +206,11 @@ void Canvas::navigate()
 
     // this needs to be dynamic, based on the canvas / image size or perhaps window size too
     float lower_bound = (assets->shader_map.find("Checker") != assets->shader_map.end() && vars.use_checker_shader ? 0.002f : 0.01f), upper_bound = 20.f;
+    
+    // Sync zoom factors (using max because if one was changed we want to apply it)
+    // Actually, we'll just prioritize vars.canvas_zoom_factor as the source of truth for navigation
+    zoom_factor = vars.canvas_zoom_factor;
+    
     vars.canvas_zoom_factor = util::clamp(vars.canvas_zoom_factor, lower_bound, upper_bound);
     zoom_factor = util::clamp(zoom_factor, lower_bound, upper_bound);
 

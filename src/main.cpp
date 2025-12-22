@@ -14,6 +14,12 @@
 #include "Tools.h"
 #include "Filters.h"
 #include "Undo_Redo.h"
+#include "ai_navigator.h"
+#include "ui_highlighter.h"
+#include "ai_assistant_window.h"
+#include "ui_config.h"
+#include "layout_manager.h"
+#include "ui_colors.h"
 
 //................................................. MACROS .................................................
 #define DEBUG 1 // macro to enable or disable custom debugging
@@ -24,6 +30,11 @@ std::list<i32> currently_pressed_keys;              // to track the current shor
 Variables vars;                                     // variables that imgui and actions use and change
 bool shaders_available = true;                      // tracks whether shaders are available in the machine
 extern const char* layer_types_str[];               // see Layer.h
+
+// AI Navigation System
+AINavigator ai_navigator;
+UIHighlighter ui_highlighter;
+AIAssistantWindow* ai_assistant = nullptr;
 
 //................................................. SOME USEFUL FUNCS .................................................
 // draws a line from point p1 to point p2 of the specified color in the window
@@ -59,6 +70,85 @@ i32 main()
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
+    // ============ MODERN UI STYLING ============
+    // Load font with better rendering
+    io.Fonts->Clear();
+    ImFontConfig font_config;
+    font_config.OversampleH = 2;  // Sharper font rendering
+    font_config.OversampleV = 2;
+    font_config.PixelSnapH = true;
+    io.Fonts->AddFontFromFileTTF("assets/fonts/caviar-dreams.ttf", 20.0f, &font_config);
+    ImGui::SFML::UpdateFontTexture();
+    
+    // Apply modern color scheme and styling
+    ImGuiStyle& style = ImGui::GetStyle();
+    
+    // Modern Colors (high contrast dark theme)
+    style.Colors[ImGuiCol_Text]                  = UIColors::Text();
+    style.Colors[ImGuiCol_TextDisabled]          = UIColors::TextDisabled();
+    style.Colors[ImGuiCol_WindowBg]              = UIColors::WindowBg();
+    style.Colors[ImGuiCol_ChildBg]               = UIColors::ChildBg();
+    style.Colors[ImGuiCol_PopupBg]               = UIColors::PopupBg();
+    style.Colors[ImGuiCol_Border]                = UIColors::Border();
+    style.Colors[ImGuiCol_BorderShadow]          = UIColors::BorderShadow();
+    style.Colors[ImGuiCol_FrameBg]               = UIColors::FrameBg();
+    style.Colors[ImGuiCol_FrameBgHovered]        = UIColors::FrameBgHover();
+    style.Colors[ImGuiCol_FrameBgActive]         = UIColors::FrameBgActive();
+    style.Colors[ImGuiCol_TitleBg]               = UIColors::TitleBg();
+    style.Colors[ImGuiCol_TitleBgActive]         = UIColors::TitleBgActive();
+    style.Colors[ImGuiCol_TitleBgCollapsed]      = UIColors::TitleBg();
+    style.Colors[ImGuiCol_MenuBarBg]             = UIColors::Header();
+    style.Colors[ImGuiCol_ScrollbarBg]           = UIColors::Scrollbar();
+    style.Colors[ImGuiCol_ScrollbarGrab]         = UIColors::ScrollbarGrab();
+    style.Colors[ImGuiCol_ScrollbarGrabHovered]  = UIColors::ScrollbarHover();
+    style.Colors[ImGuiCol_ScrollbarGrabActive]   = UIColors::ScrollbarActive();
+    style.Colors[ImGuiCol_CheckMark]             = UIColors::Primary();
+    style.Colors[ImGuiCol_SliderGrab]            = UIColors::SliderGrab();
+    style.Colors[ImGuiCol_SliderGrabActive]      = UIColors::SliderGrabActive();
+    style.Colors[ImGuiCol_Button]                = UIColors::Button();
+    style.Colors[ImGuiCol_ButtonHovered]         = UIColors::ButtonHover();
+    style.Colors[ImGuiCol_ButtonActive]          = UIColors::ButtonActive();
+    style.Colors[ImGuiCol_Header]                = UIColors::Header();
+    style.Colors[ImGuiCol_HeaderHovered]         = UIColors::HeaderHover();
+    style.Colors[ImGuiCol_HeaderActive]          = UIColors::HeaderActive();
+    style.Colors[ImGuiCol_Separator]             = UIColors::Border();
+    style.Colors[ImGuiCol_SeparatorHovered]      = UIColors::Primary();
+    style.Colors[ImGuiCol_SeparatorActive]       = UIColors::PrimaryActive();
+    style.Colors[ImGuiCol_ResizeGrip]            = UIColors::Primary();
+    style.Colors[ImGuiCol_ResizeGripHovered]     = UIColors::PrimaryHover();
+    style.Colors[ImGuiCol_ResizeGripActive]      = UIColors::PrimaryActive();
+    style.Colors[ImGuiCol_Tab]                   = UIColors::Tab();
+    style.Colors[ImGuiCol_TabHovered]            = UIColors::TabHover();
+    style.Colors[ImGuiCol_TabActive]             = UIColors::TabActive();
+    style.Colors[ImGuiCol_TabUnfocused]          = UIColors::Tab();
+    style.Colors[ImGuiCol_TabUnfocusedActive]    = UIColors::Header();
+    style.Colors[ImGuiCol_DockingPreview]        = UIColors::Primary();
+    style.Colors[ImGuiCol_DockingEmptyBg]        = UIColors::WindowBg();
+    
+    // Spacing and Sizing (generous, modern feel)
+    style.WindowPadding     = ImVec2(12.0f, 12.0f);
+    style.FramePadding      = ImVec2(10.0f, 6.0f);
+    style.ItemSpacing       = ImVec2(8.0f, 6.0f);
+    style.ItemInnerSpacing  = ImVec2(6.0f, 4.0f);
+    style.IndentSpacing     = 20.0f;
+    style.ScrollbarSize     = 14.0f;
+    style.GrabMinSize       = 12.0f;
+    
+    // Borders and Rounding (modern look)
+    style.WindowBorderSize  = 1.0f;
+    style.ChildBorderSize   = 1.0f;
+    style.PopupBorderSize   = 1.0f;
+    style.FrameBorderSize   = 0.0f;
+    style.TabBorderSize     = 0.0f;
+    
+    style.WindowRounding    = 6.0f;
+    style.ChildRounding     = 4.0f;
+    style.FrameRounding     = 4.0f;
+    style.PopupRounding     = 4.0f;
+    style.ScrollbarRounding = 9.0f;
+    style.GrabRounding      = 4.0f;
+    style.TabRounding       = 4.0f;
+
     if (!sf::Shader::isAvailable())
     {
         // handle this more gracefully
@@ -66,6 +156,21 @@ i32 main()
         std::cerr << "Perhaps your GPU drivers need to be updated?\n";
         shaders_available = false;
     }
+
+    // Initialize AI System
+    if (ai_navigator.initialize("dependencies/models/Llama-3.2-1B-Instruct-Q4_K_M.gguf")) {
+        ai_assistant = new AIAssistantWindow(&ai_navigator, &ui_highlighter);
+    }
+
+    // ============ LAYOUT MANAGER: Load saved layout or use defaults ============
+    g_layout_manager.loadLayout("layout.json");
+    // Register default window positions (only applied if no saved layout)
+    g_layout_manager.registerWindow("Layers", ImVec2(20, 60), ImVec2(280, 500));
+    g_layout_manager.registerWindow("Color", ImVec2(320, 60), ImVec2(280, 350));
+    g_layout_manager.registerWindow("Tools", ImVec2(620, 60), ImVec2(200, 300));
+    g_layout_manager.registerWindow("Canvas", ImVec2(300, 100), ImVec2(800, 600));
+    g_layout_manager.registerWindow("AI Assistant", ImVec2(840, 60), ImVec2(350, 400));
+    g_layout_manager.registerWindow("Debug Information", ImVec2(840, 480), ImVec2(350, 200));
 
     // load the assets and register keybinds or shortcuts
     Assets assets;
@@ -85,6 +190,7 @@ i32 main()
     register_action({sf::Keyboard::B}, "brush_tool");
     register_action({sf::Keyboard::E}, "eraser_tool");
     register_action({sf::Keyboard::G}, "fill_tool");
+    register_action({sf::Keyboard::Z}, "zoom_tool");
 
     // the one and the only, canvas!
     Canvas canvas(vec2(window.getSize().x * 0.7, window.getSize().y * 0.85));
@@ -97,8 +203,9 @@ i32 main()
         "No tool. Literally no tool is selected at all.. (N)",
         "Move tool. Moves layers using the mouse input. (V)",
         "Brush tool. The typical paint brush tool that can paint over layers, given its settings. (B)",
-        "Eraser tool. Erases contents of a layer. (E)",
+        "Eraser tool. Erases brush strokes on a layer. (E)",
         "Fill tool. Flood fills a color onto a valid region of a layer. (G)",
+        "Zoom tool. Left-click to zoom in, right-click to zoom out. (Z)",
     };
     canvas.assets = &assets;
     canvas.tools = &tools;
@@ -151,6 +258,23 @@ i32 main()
 
                     if (ImGuiFileDialog::Instance()->IsOpened())
                         ImGuiFileDialog::Instance()->Close();
+                }
+
+                // AI Shortcuts
+                if (event.key.code == sf::Keyboard::F2) {
+                    if (ai_assistant) ai_assistant->toggle();
+                }
+                if (event.key.code == sf::Keyboard::Escape) {
+                    if (ui_highlighter.isActive()) ui_highlighter.stopNavigation();
+                }
+                // Advance to next step with Space, Enter, or Right arrow
+                // Pass true to advanceToNextStep to also execute the action
+                if (ui_highlighter.isActive()) {
+                    if (event.key.code == sf::Keyboard::Space || 
+                        event.key.code == sf::Keyboard::Enter ||
+                        event.key.code == sf::Keyboard::Right) {
+                        ui_highlighter.advanceToNextStep(true);  // true = execute the action
+                    }
                 }
 
                 // remember the pressed key
@@ -275,7 +399,7 @@ i32 main()
 
         // mouse cursors
         window.setMouseCursorVisible(!vars.canvas_focused || tools.current_tool == Tools::NO); // show window cursor when not on canvas or show always when no tool is selected
-        if ((tools.current_tool == Tools::MOVE || tools.current_tool == Tools::FILL) && vars.canvas_focused)
+        if ((tools.current_tool == Tools::MOVE || tools.current_tool == Tools::FILL || tools.current_tool == Tools::ZOOM) && vars.canvas_focused)
         {
             circ.setRadius(7 * canvas.zoom_factor);
             circ.setOutlineThickness(1 * canvas.zoom_factor);
@@ -292,7 +416,7 @@ i32 main()
         canvas.window_texture.display();
 
         //................................................. THE LAYERS PANEL .................................................
-        ImGui::Begin("Layers");
+        ImGui::Begin("Layers", nullptr, g_layout_manager.getWindowFlags());
         // gives ability to customize the currently selected layer
         Layer* current_layer = canvas.current_layer();
         if (current_layer)
@@ -412,50 +536,116 @@ i32 main()
                 ur.undostack.push_back(e);
                 ur.redostack.clear();
             }
+            ui_highlighter.registerUIElement("Create new layer button", ImGui::GetItemRectMin(), ImGui::GetItemRectSize());
         }
         ImGui::End();
 
         //................................................. THE COLOR PANEL .................................................
-        ImGui::Begin("Color");
-        ImGui::Spacing();
+        ImGui::Begin("Color", nullptr, g_layout_manager.getWindowFlags());
+        
         float* color_to_edit = (float*)&(canvas.current_color == 0 ? canvas.primary_color : canvas.secondary_color);
-        ImGui::ColorPicker3("##color", color_to_edit, ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoAlpha);
+        
+        // Modern color picker with vertical hue bar (not wheel)
+        ImGui::ColorPicker3("##picker", color_to_edit,
+            ImGuiColorEditFlags_NoSidePreview |
+            ImGuiColorEditFlags_NoSmallPreview |
+            ImGuiColorEditFlags_NoAlpha |
+            ImGuiColorEditFlags_PickerHueBar);  // Vertical hue bar
+        
+        ImGui::Separator();
+        
+        // RGB/HSV inputs
+        ImGui::ColorEdit3("RGB", color_to_edit, ImGuiColorEditFlags_DisplayRGB);
+        
         ImGui::Spacing();
-        ImGui::ColorEdit3("##rgb", color_to_edit, ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_InputRGB);
-        ImGui::ColorEdit3("##hsv", color_to_edit, ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_InputRGB);
+        ImGui::Separator();
         ImGui::Spacing();
-        if (ImGui::ColorButton("Click to change the Primary Color", canvas.primary_color, 0, ImVec2(50, 30)))
-        {
+        
+        // Primary/Secondary color selection with larger buttons
+        ImGui::TextColored(UIColors::TextDim(), "COLOR SELECTION");
+        ImGui::Spacing();
+        
+        bool is_primary = (canvas.current_color == 0);
+        
+        // Primary color button
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, is_primary ? 2.0f : 0.0f);
+        ImGui::PushStyleColor(ImGuiCol_Border, UIColors::Primary());
+        if (ImGui::ColorButton("##Primary", canvas.primary_color, ImGuiColorEditFlags_NoAlpha, ImVec2(60, 40))) {
             canvas.current_color = 0;
         }
+        ImGui::PopStyleColor();
+        ImGui::PopStyleVar();
         ImGui::SameLine();
-        ImGui::Text("Primary Color%s", (canvas.current_color == 0 ? " (Selected)" : ""));
-        if (ImGui::ColorButton("Click to change the Secondary Color", canvas.secondary_color, 0, ImVec2(50, 30)))
-        {
+        ImGui::Text("Primary%s", is_primary ? " *" : "");
+        
+        // Secondary color button
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, !is_primary ? 2.0f : 0.0f);
+        ImGui::PushStyleColor(ImGuiCol_Border, UIColors::Primary());
+        if (ImGui::ColorButton("##Secondary", canvas.secondary_color, ImGuiColorEditFlags_NoAlpha, ImVec2(60, 40))) {
             canvas.current_color = 1;
         }
+        ImGui::PopStyleColor();
+        ImGui::PopStyleVar();
         ImGui::SameLine();
-        ImGui::Text("Secondary Color%s", (canvas.current_color == 1 ? " (Selected)" : ""));
+        ImGui::Text("Secondary%s", !is_primary ? " *" : "");
+        
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+        
+        // Quick color swatches
+        ImGui::TextColored(UIColors::TextDim(), "QUICK COLORS");
+        ImGui::Spacing();
+        
+        static const ImVec4 quick_colors[] = {
+            ImVec4(1.0f, 1.0f, 1.0f, 1.0f),  // White
+            ImVec4(0.0f, 0.0f, 0.0f, 1.0f),  // Black
+            ImVec4(1.0f, 0.0f, 0.0f, 1.0f),  // Red
+            ImVec4(1.0f, 0.5f, 0.0f, 1.0f),  // Orange
+            ImVec4(1.0f, 1.0f, 0.0f, 1.0f),  // Yellow
+            ImVec4(0.0f, 1.0f, 0.0f, 1.0f),  // Green
+            ImVec4(0.0f, 0.7f, 1.0f, 1.0f),  // Cyan
+            ImVec4(0.2f, 0.4f, 1.0f, 1.0f),  // Blue
+            ImVec4(0.6f, 0.2f, 1.0f, 1.0f),  // Purple
+            ImVec4(1.0f, 0.4f, 0.7f, 1.0f),  // Pink
+        };
+        
+        ImVec2 swatch_size(32.0f, 32.0f);
+        for (int i = 0; i < 10; i++) {
+            if (i > 0 && i % 5 != 0) ImGui::SameLine();
+            ImGui::PushID(i);
+            if (ImGui::ColorButton("##swatch", quick_colors[i], ImGuiColorEditFlags_NoAlpha, swatch_size)) {
+                if (canvas.current_color == 0)
+                    canvas.primary_color = quick_colors[i];
+                else
+                    canvas.secondary_color = quick_colors[i];
+            }
+            ImGui::PopID();
+        }
+        
         ImGui::End();
 
         //................................................. THE TOOLS PANEL .................................................
-        ImGui::Begin("Tools");
+        ImGui::Begin("Tools", nullptr, g_layout_manager.getWindowFlags());
         // show each tool and allow them to be selected
         i32 i = 0;
         for (auto& [tool_name, tool_texture] : assets.texture_map)
         {
             bool is_selected = i == tools.current_tool;
-            // push highlighted style if this is the current tool
+            // push highlighted style if this is the current tool (blue accent)
             if (is_selected)
             {
-                ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.8f, 0.8f, 1.0f));
-                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.9f, 0.9f, 0.9f, 1.0f));
-                ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.7f, 0.7f, 0.7f, 1.0f));
+                ImGui::PushStyleColor(ImGuiCol_Button, UIColors::Primary());
+                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, UIColors::PrimaryHover());
+                ImGui::PushStyleColor(ImGuiCol_ButtonActive, UIColors::PrimaryActive());
             }
 
             // clicked tool is activated, rest are deactivated
-            if (ImGui::ImageButton(tool_name.c_str(), tool_texture.getNativeHandle(), ImVec2(22, 22)))
+            if (ImGui::ImageButton(tool_name.c_str(), tool_texture.getNativeHandle(), ImVec2(UIConfig::ICON_SIZE_TOOL, UIConfig::ICON_SIZE_TOOL))) {
                 tools.current_tool = i;
+                ui_highlighter.onElementClicked(tool_name);
+            }
+            ui_highlighter.registerUIElement(tool_name, ImGui::GetItemRectMin(), ImGui::GetItemRectSize());
 
             // only pop if we pushed
             if (is_selected)
@@ -502,6 +692,82 @@ i32 main()
         if (vars.show_menu_bar) gui::menu_bar(vars, filters, ur);
         if (vars.show_open_img_dialog) gui::open_dialog(vars);
         if (vars.show_saveas_img_dialog) gui::saveas_dialog(vars);
+        
+        //................................................. AI ACTION DISPATCHER .................................................
+        // Check if the AI navigation wants to execute an action
+        if (ui_highlighter.shouldExecuteAction()) {
+            std::string element_id = ui_highlighter.getExecuteElementId();
+            
+            // Menu opening actions
+            if (element_id == "File menu") {
+                // File menu will be opened by menu_bar on next frame
+            } else if (element_id == "Transform menu") {
+                // Transform menu will be opened by menu_bar on next frame
+            } else if (element_id == "Adjust menu") {
+                // Adjust menu will be opened by menu_bar on next frame
+            } else if (element_id == "Filters menu") {
+                // Filters menu will be opened by menu_bar on next frame
+            }
+            // File operations
+            else if (element_id == "New button") {
+                vars.show_new_img_dialog = true;
+            } else if (element_id == "Open button") {
+                vars.show_open_img_dialog = true;
+            } else if (element_id == "Export button") {
+                vars.show_saveas_img_dialog = true;
+            }
+            // Edit operations
+            else if (element_id == "Undo button") {
+                ur.undo();
+            } else if (element_id == "Redo button") {
+                ur.redo();
+            }
+            // Tool selection
+            else if (element_id == "No Tool") {
+                tools.current_tool = Tools::NO;
+            } else if (element_id == "Move Tool") {
+                tools.current_tool = Tools::MOVE;
+            } else if (element_id == "Brush Tool") {
+                tools.current_tool = Tools::BRUSH;
+            } else if (element_id == "Eraser Tool") {
+                tools.current_tool = Tools::ERASER;
+            } else if (element_id == "Fill Tool") {
+                tools.current_tool = Tools::FILL;
+            } else if (element_id == "Zoom Tool") {
+                tools.current_tool = Tools::ZOOM;
+            }
+            // Layer operations
+            else if (element_id == "Create new layer button" && canvas.initialized) {
+                Raster* raster = new Raster();
+                raster->create_blank(canvas.size, sf::Color(255, 255, 255, 0));
+                canvas.layers.emplace_back(
+                    canvas.default_layer_name(),
+                    (canvas.window_size - canvas.size) / 2,
+                    raster, Layer::RASTER, Layer::NORMAL
+                );
+                Edit e(Edit::LAYER_ADD, canvas.layers.size() - 1);
+                ur.undostack.push_back(e);
+                ur.redostack.clear();
+            }
+            // Filter operations (simple ones without popups)
+            else if (element_id == "Gray Scale button") {
+                filters.apply_filter("GrayScale");
+            } else if (element_id == "Invert button") {
+                filters.apply_filter("Invert");
+            } else if (element_id == "Sepia button") {
+                filters.apply_filter("Sepia");
+            } else if (element_id == "Edge Detection button") {
+                filters.apply_filter("EdgeDetection");
+            } else if (element_id == "Sharpen button") {
+                filters.apply_filter("Sharpen");
+            } else if (element_id == "Flip Horizontal button") {
+                filters.apply_filter("FlipX");
+            } else if (element_id == "Flip Vertical button") {
+                filters.apply_filter("FlipY");
+            }
+            // Note: Filters with sliders (Brightness, Blur, etc.) would need popup handling
+            // which requires more complex state management
+        }
 
         //................................................. NEW IMAGE .................................................
         if (vars.show_new_img_dialog)
@@ -667,7 +933,8 @@ i32 main()
         //................................................. DEBUG WINDOW .................................................
 #if DEBUG == 1 // this is for debugging only
         // display the current pressed keys as they are pressed or released
-        ImGui::Begin("Debug Information");
+        ImGui::Begin("Debug Information", nullptr, g_layout_manager.getWindowFlags());
+
         std::string keys_pressed = "Keys pressed: ";
         for (auto key : currently_pressed_keys)
         {
@@ -699,12 +966,26 @@ i32 main()
 #endif
 
         //................................................. END OF FRAME .................................................
+        // Render AI System
+        if (ai_assistant) ai_assistant->render();
+        ui_highlighter.update(); // Draws overlay on top
+
         ImGui::SFML::Render(window);
         window.display();
         frames++;
     }
 
     //................................................. DE-INITIALIZATION .................................................    
+    // Save layout before exit
+    g_layout_manager.saveLayout("layout.json");
+    
+    // Cleanup AI
+    if (ai_assistant) {
+        delete ai_assistant;
+        ai_assistant = nullptr;
+    }
+    ai_navigator.cleanup();
+    
     ImGui::SFML::Shutdown();
     return 0;
 }

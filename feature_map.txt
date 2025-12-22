@@ -1,0 +1,165 @@
+# Grid Image Editor - Feature Map
+# This file documents all features and their navigation paths for AI integration
+# Format: FEATURE_NAME | NAVIGATION_PATH | KEYBOARD_SHORTCUT (if any) | PARAMETERS (if any)
+
+================================================================================
+FILE OPERATIONS
+================================================================================
+
+New Image | File > New | Ctrl+N | width, height, background (Black/White/Transparent/Custom)
+Open Image | File > Open | Ctrl+O | file_path (supports: .png, .jpg, .jpeg, .bmp)
+Export Image | File > Export.. | Ctrl+Shift+S | file_path (supports: .png, .jpg, .jpeg, .bmp)
+
+================================================================================
+EDIT OPERATIONS
+================================================================================
+
+Undo | Edit > Undo | Ctrl+Z | none
+Redo | Edit > Redo | Ctrl+Y | none
+
+================================================================================
+VIEW OPTIONS
+================================================================================
+
+Toggle Menu Bar | View > Menu bar | Alt | toggle
+Transparent Checker Shader | View > Use Transparent Checker Shader | none | toggle
+
+================================================================================
+CANVAS NAVIGATION
+================================================================================
+
+Reset Canvas Navigation | none | Ctrl+Shift+R | none
+Zoom In/Out | Canvas (hover) + Mouse Scroll | Mouse Scroll | zoom_factor
+Pan Canvas | Canvas (hover) + Middle Mouse Drag | Middle Mouse | pan_delta_x, pan_delta_y
+
+================================================================================
+TOOLS
+================================================================================
+
+No Tool | Tools Panel (click icon) | N | none
+Move Tool | Tools Panel (click icon) | V | none
+Brush Tool | Tools Panel (click icon) | B | size (1-2000px), hardness (0-100%), opacity (0-100%)
+Eraser Tool | Tools Panel (click icon) | E | size (1-2000px), hardness (0-100%), opacity (0-100%)
+Fill Tool | Tools Panel (click icon) | G | tolerance (0-255), opacity (0-100%), contiguous (bool)
+
+Tool Size Decrease | none | [ | decreases current tool size
+Tool Size Increase | none | ] | increases current tool size
+
+================================================================================
+LAYER OPERATIONS
+================================================================================
+
+Create New Layer | Layers Panel > Create new layer button | none | none
+Duplicate Layer | Layers Panel > D button (per layer) | none | none
+Delete Layer | Layers Panel > X button (per layer) | none | none
+Select Layer | Layers Panel > Click layer name | none | layer_index
+Toggle Layer Visibility | Layers Panel > Checkbox (per layer) | none | is_visible (bool)
+Rename Layer | Layers Panel > Name input field | none | layer_name (max 64 chars)
+Set Layer Opacity | Layers Panel > Opacity drag field | none | opacity (0-100%)
+Reorder Layers | Layers Panel > Drag and Drop layer | none | from_index, to_index
+
+================================================================================
+BLEND MODES (per layer)
+================================================================================
+
+Normal | Layers Panel > Blend Mode dropdown | none | none
+Dissolve | Layers Panel > Blend Mode dropdown | none | none
+Darken | Layers Panel > Blend Mode dropdown | none | none
+Multiply | Layers Panel > Blend Mode dropdown | none | none
+Color Burn | Layers Panel > Blend Mode dropdown | none | none
+Linear Burn | Layers Panel > Blend Mode dropdown | none | none
+Lighten | Layers Panel > Blend Mode dropdown | none | none
+Screen | Layers Panel > Blend Mode dropdown | none | none
+Color Dodge | Layers Panel > Blend Mode dropdown | none | none
+Linear Dodge | Layers Panel > Blend Mode dropdown | none | none
+Overlay | Layers Panel > Blend Mode dropdown | none | none
+Soft Light | Layers Panel > Blend Mode dropdown | none | none
+Hard Light | Layers Panel > Blend Mode dropdown | none | none
+Vivid Light | Layers Panel > Blend Mode dropdown | none | none
+Linear Light | Layers Panel > Blend Mode dropdown | none | none
+Pin Light | Layers Panel > Blend Mode dropdown | none | none
+Difference | Layers Panel > Blend Mode dropdown | none | none
+Exclusion | Layers Panel > Blend Mode dropdown | none | none
+Subtract | Layers Panel > Blend Mode dropdown | none | none
+Divide | Layers Panel > Blend Mode dropdown | none | none
+Hue | Layers Panel > Blend Mode dropdown | none | none
+Saturation | Layers Panel > Blend Mode dropdown | none | none
+Color | Layers Panel > Blend Mode dropdown | none | none
+Luminosity | Layers Panel > Blend Mode dropdown | none | none
+
+================================================================================
+COLOR OPERATIONS
+================================================================================
+
+Color Picker (Hue Wheel) | Color Panel > Hue Wheel | none | hue, saturation, value
+RGB Color Input | Color Panel > RGB fields | none | r (0-255), g (0-255), b (0-255)
+HSV Color Input | Color Panel > HSV fields | none | h (0-360), s (0-100%), v (0-100%)
+Select Primary Color | Color Panel > Primary Color button | none | none
+Select Secondary Color | Color Panel > Secondary Color button | none | none
+
+================================================================================
+MANIPULATIONS / TRANSFORMS
+================================================================================
+
+Flip Horizontal | Manipulations > Flip Horizontal | none | none
+Flip Vertical | Manipulations > Flip Vertical | none | none
+Rotate Custom Angle | Manipulations > Rotate some degrees | none | angle (-360 to 360 degrees)
+Rotate 90 CW | Manipulations > Rotate 90 degrees CW | none | none
+Rotate 90 CCW | Manipulations > Rotate 90 degrees CCW | none | none
+
+================================================================================
+FILTERS / ADJUSTMENTS
+================================================================================
+
+Brightness | Manipulations > Brightness | none | strength (-150 to 150)
+Contrast | Manipulations > Contrast | none | strength (-100 to 100)
+Gray Scale | Manipulations > Gray Scale | none | none
+Invert | Manipulations > Invert | none | none
+Sepia | Manipulations > Sepia | none | none
+
+================================================================================
+BLUR / EFFECTS
+================================================================================
+
+Box Blur | Manipulations > Box Blur | none | strength (1-100)
+Gaussian Blur | Manipulations > Gaussian Blur | none | strength (1-100)
+Pixelate | Manipulations > Pixelate | none | size (2-100 pixels)
+Edge Detection | Manipulations > Edge Detection | none | none
+Sharpen | Manipulations > Sharpen | none | none
+
+================================================================================
+UI PANELS
+================================================================================
+
+Canvas Window | Main viewport | none | displays the image with zoom/pan
+Layers Panel | Dockable window | none | layer management
+Tools Panel | Dockable window | none | tool selection and settings
+Color Panel | Dockable window | none | color picker and selection
+Debug Information | Dockable window (when DEBUG=1) | none | displays internal state
+
+================================================================================
+LAYER TYPES (for future reference)
+================================================================================
+
+Raster | Layer type for pixel-based graphics | currently supported
+Adjustment | Layer type for adjustment layers | planned
+Text | Layer type for text layers | planned
+Shape | Layer type for vector shapes | planned
+Smart | Layer type for smart objects | planned
+Fill | Layer type for fill layers | planned
+
+================================================================================
+MOUSE CONTROLS
+================================================================================
+
+Left Click + Drag (on canvas) | Use current tool (brush/eraser/fill) | none | depends on tool
+Middle Click + Drag (on canvas) | Pan canvas | none | none
+Right Click (on canvas) | Context actions (varies) | none | none
+Mouse Scroll (on canvas) | Zoom in/out | none | zoom_delta
+
+================================================================================
+SUPPORTED IMAGE FORMATS
+================================================================================
+
+Open: PNG, JPG, JPEG, BMP
+Export: PNG, JPG, JPEG, BMP

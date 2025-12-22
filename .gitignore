@@ -5,3 +5,24 @@ obj
 imgui.ini
 test.*
 untitled.*
+dependencies/models/
+dependencies/llama.cpp/
+# Build output
+build/
+build_main/
+obj/
+
+# Binaries
+bin/
+*.dll
+*.exe
+
+# AI models
+dependencies/models/
+*.gguf
+
+# CMake noise
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile

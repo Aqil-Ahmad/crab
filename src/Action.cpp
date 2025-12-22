@@ -167,6 +167,10 @@ void do_action(const Action& action)
         {
             action.tools->current_tool = Tools::FILL;
         }
+        else if (action.name == "zoom_tool")
+        {
+            action.tools->current_tool = Tools::ZOOM;
+        }
         else if (action.name == "tool_size_down")
         {
             if (action.tools->current_tool == Tools::BRUSH)

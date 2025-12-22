@@ -1,0 +1,44 @@
+{
+  "AI Assistant": {
+    "is_open": true,
+    "pos_x": 840.0,
+    "pos_y": 60.0,
+    "size_x": 350.0,
+    "size_y": 400.0
+  },
+  "Canvas": {
+    "is_open": true,
+    "pos_x": 300.0,
+    "pos_y": 100.0,
+    "size_x": 800.0,
+    "size_y": 600.0
+  },
+  "Color": {
+    "is_open": true,
+    "pos_x": 320.0,
+    "pos_y": 60.0,
+    "size_x": 280.0,
+    "size_y": 350.0
+  },
+  "Debug Information": {
+    "is_open": true,
+    "pos_x": 840.0,
+    "pos_y": 480.0,
+    "size_x": 350.0,
+    "size_y": 200.0
+  },
+  "Layers": {
+    "is_open": true,
+    "pos_x": 20.0,
+    "pos_y": 60.0,
+    "size_x": 280.0,
+    "size_y": 500.0
+  },
+  "Tools": {
+    "is_open": true,
+    "pos_x": 620.0,
+    "pos_y": 60.0,
+    "size_x": 200.0,
+    "size_y": 300.0
+  }
+}
