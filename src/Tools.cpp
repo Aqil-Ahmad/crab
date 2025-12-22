@@ -16,6 +16,7 @@ Tools::Tools(Canvas* canvas, Undo_redo* ur)
     use_current_tool[BRUSH] = &brush;
     use_current_tool[ERASER] = &eraser;
     use_current_tool[FILL] = &fill;
+    use_current_tool[ZOOM] = &zoom;
 }
 
 //..................................................................................................
@@ -412,5 +413,63 @@ void fill(Tools& t)
         t.ur->undostack.push_back(e);
         t.ur->redostack.clear();
         raster->texture.update(raster_img);
+    }
+}
+
+//..................................................................................................
+//..................................................................................................
+void zoom(Tools& t)
+{
+    // Zoom tool: Left click = zoom in, Right click = zoom out
+    // Also supports scroll wheel
+    static bool was_left_held = false;
+    static bool was_right_held = false;
+    
+    bool left_just_pressed = vars.mouse_l_held && !was_left_held;
+    bool right_just_pressed = vars.mouse_r_held && !was_right_held;
+    
+    was_left_held = vars.mouse_l_held;
+    was_right_held = vars.mouse_r_held;
+    
+    const float zoom_step = 0.05f;  // 5% zoom per click
+    const float min_zoom = 0.01f;
+    const float max_zoom = 20.0f;
+    
+    if (left_just_pressed)
+    {
+        // Zoom in (smaller factor = closer look)
+        vars.canvas_zoom_factor *= (1.0f - zoom_step);
+        vars.navigate_canvas_right_now = true;
+    }
+    else if (right_just_pressed)
+    {
+        // Zoom out
+        vars.canvas_zoom_factor *= (1.0f + zoom_step);
+        vars.navigate_canvas_right_now = true;
+    }
+    
+    // Draw zoom indicator
+    Layer* current_layer = t.canvas->current_layer();
+    if (current_layer && current_layer->type == Layer::RASTER)
+    {
+        vec2 layer_size = ((Raster*)current_layer->graphic)->texture.getSize();
+        sf::FloatRect bounds(current_layer->pos, layer_size);
+        
+        if (bounds.contains(t.canvas->mouse_p))
+        {
+            // Draw crosshair at mouse position
+            const float crosshair_size = 20 * t.canvas->zoom_factor;
+            sf::RectangleShape h_line(sf::Vector2f(crosshair_size * 2, 2 * t.canvas->zoom_factor));
+            sf::RectangleShape v_line(sf::Vector2f(2 * t.canvas->zoom_factor, crosshair_size * 2));
+            
+            h_line.setPosition(t.canvas->mouse_p.x - crosshair_size, t.canvas->mouse_p.y - 1 * t.canvas->zoom_factor);
+            v_line.setPosition(t.canvas->mouse_p.x - 1 * t.canvas->zoom_factor, t.canvas->mouse_p.y - crosshair_size);
+            
+            h_line.setFillColor(sf::Color(100, 180, 255, 180));
+            v_line.setFillColor(sf::Color(100, 180, 255, 180));
+            
+            t.canvas->window_texture.draw(h_line);
+            t.canvas->window_texture.draw(v_line);
+        }
     }
 }
