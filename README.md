@@ -2,8 +2,6 @@
 
 An Image Editor that wants to be the best. (Still an incomplete/work-in-progress project)
 
-![What Grid looks like](assets/grid.png)
-
 ## Repository Structure
 - `src` directory contains all the source code.
 - `shaders` contain all the fragment shaders used in grid for filters, tools, blend modes, etc.
