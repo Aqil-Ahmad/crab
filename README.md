@@ -1,4 +1,4 @@
-# Grid
+# Crab
 
 An Image Editor that wants to be the best. (Still an incomplete/work-in-progress project)
 
